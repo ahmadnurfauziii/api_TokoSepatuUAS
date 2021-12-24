@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Helpers\ResponseFormatter;
 use App\Models\Product;
-use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreProductRequest;
 use Illuminate\Http\Request;
+use App\Helpers\ResponseFormatter;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
-use App\Http\Resources\ProductResource;
+use App\Http\Resources\ProductResources;
+use App\Http\Requests\StoreProductRequest;
 
 class ProductController extends Controller
 {
@@ -79,22 +79,23 @@ class ProductController extends Controller
     public function store(StoreProductRequest $request)
     {
         $product = Product::with(['category', 'galleries'])->create($request->validated());        
-        return new ProductResource($product);
+        return new ProductResources($product);
     }
     public function show(Product $product)
     {
-        return new ProductResource($product);
+        return new ProductResources($product);
     }
     public function update(StoreProductRequest $request, Product $product)
     {
         $product->update($request->validated());
-        return $product;
-        // return new ProductResource($product);
+        // return $product;
+        return new ProductResources($product);
     }
     public function destroy(Product $product)
     {
         $product->delete();
-        return new ProductResource($product);
+        
+        return 'Data berhasil dihapus';
     }
 }
 
