@@ -8,7 +8,8 @@ use App\Models\ProductCategory;
 use App\Helpers\ResponseFormatter;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
-use App\Http\Resources\ProductCategoryResource;
+use App\Http\Resources\ProductCategoryResources;
+use App\Http\Requests\StoreProductCategoryRequest;
 
 class ProductCategoryController extends Controller
 {
@@ -52,44 +53,55 @@ class ProductCategoryController extends Controller
         );
     }
     public function store(Request $request)
-    {
+    {   
         $data = $request->all();
 
         $validator = Validator::make($data, [
-            'limit' => 'required',
-            'name' => 'required',            
+            'name' => 'required',
         ]);
 
         if ($validator->fails()) {
             return response(['error' => $validator->errors(), 'Validation Error']);
         }
 
-        $product = ProductCategory::create($data);
-        return new ProductCategory($product);
+        $category = ProductCategory::create($data);
+        return new ProductCategoryResources($category);
     }
-    public function show(ProductCategory $product)
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  \App\Models\Category  $category
+     * @return \Illuminate\Http\Response
+     */
+    public function show(ProductCategory $category)
     {
-        return new ProductCategoryResource($product);
+        return new ProductCategoryResources($category);
     }
-    public function update(Request $request, Product $product)
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Category  $category
+     * @return \Illuminate\Http\Response
+     */
+    public function update(StoreProductCategoryRequest $request, ProductCategory $category)
     {
-        $data = $request->all();
-
-        $validator = Validator::make($data, [
-            'limit' => 'required',
-            'name' => 'required',            
-        ]);
-
-        if ($validator->fails()) {
-            return response(['error' => $validator->errors(), 'Validation Error']);
-        }
-
-        $product->update($request->all());
-        return new ProductCategoryResource($product);
+        $category->update($request->validated());
+        return new ProductCategoryResources($category);
     }
-    public function destroy(Product $product)
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\Models\Category  $category
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(ProductCategory $category)
     {
-        $product->delete();
-        return new ProductCategoryResource($product);
+        $category->delete();
+
+        return 'Data berhasil dihapus';
     }
 }

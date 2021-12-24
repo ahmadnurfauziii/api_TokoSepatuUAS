@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Helpers\ResponseFormatter;
 use App\Models\Product;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreProductRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\ProductResource;
@@ -75,51 +76,20 @@ class ProductController extends Controller
             'Data produk berhasil diambil'
         );
     }
-    public function store(Request $request)
+    public function store(StoreProductRequest $request)
     {
-        $data = $request->all();
-
-        $validator = Validator::make($data, [
-            'limit' => 'required',
-            'name' => 'required',
-            'description' => 'required',
-            'tags' => 'required',
-            'categories' => 'required',
-            'price_from' => 'required',
-            'price_to' => 'required',
-        ]);
-
-        if ($validator->fails()) {
-            return response(['error' => $validator->errors(), 'Validation Error']);
-        }
-
-        $product = Product::create($data);
+        $product = Product::with(['category', 'galleries'])->create($request->validated());        
         return new ProductResource($product);
     }
     public function show(Product $product)
     {
         return new ProductResource($product);
     }
-    public function update(Request $request, Product $product)
+    public function update(StoreProductRequest $request, Product $product)
     {
-        $data = $request->all();
-
-        $validator = Validator::make($data, [
-            'limit' => 'required',
-            'name' => 'required',
-            'description' => 'required',
-            'tags' => 'required',
-            'categories' => 'required',
-            'price_from' => 'required',
-            'price_to' => 'required',
-        ]);
-
-        if ($validator->fails()) {
-            return response(['error' => $validator->errors(), 'Validation Error']);
-        }
-
-        $product->update($request->all());
-        return new ProductResource($product);
+        $product->update($request->validated());
+        return $product;
+        // return new ProductResource($product);
     }
     public function destroy(Product $product)
     {
