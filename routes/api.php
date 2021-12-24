@@ -19,6 +19,21 @@ use App\Http\Controllers\API\UserController;
 */
 
 
-Route::get('products',[ProductController::class, 'all']); 
-Route::get('categories',[ProductCategoryController::class, 'all']);
+// Route::get('products',[ProductController::class, 'all']); 
+// Route::get('categories',[ProductCategoryController::class, 'all']);
 
+ 
+ 
+Route::middleware(['auth:sanctum'])->group( function () {
+    Route::apiResource('categories', ProductCategoryController::class);
+    Route::apiResource('products', ProductController::class);
+});
+
+Route::post('register',[UserController::class, 'register']);
+Route::post('login',[UserController::class, 'login']); 
+
+Route::middleware('auth:sanctum')->group(function (){
+    Route::get('user', [UserController::class, 'fetch']); 
+    Route::post('logout', [UserController::class, 'logout']);          
+    
+});

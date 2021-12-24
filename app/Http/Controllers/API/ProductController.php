@@ -6,14 +6,16 @@ use App\Helpers\ResponseFormatter;
 use App\Models\Product;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use App\Http\Resources\ProductResource;
 
 class ProductController extends Controller
 {
-    public function all(Request $request)
+    public function index(Request $request)
     {
         $id = $request->input('id');
         $limit = $request->input('limit');
-        $name = $request->input('id');
+        $name = $request->input('name');
         $description = $request->input('description');
         $tags = $request->input('tags');
         $categories = $request->input('categories');
@@ -73,4 +75,56 @@ class ProductController extends Controller
             'Data produk berhasil diambil'
         );
     }
+    public function store(Request $request)
+    {
+        $data = $request->all();
+
+        $validator = Validator::make($data, [
+            'limit' => 'required',
+            'name' => 'required',
+            'description' => 'required',
+            'tags' => 'required',
+            'categories' => 'required',
+            'price_from' => 'required',
+            'price_to' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response(['error' => $validator->errors(), 'Validation Error']);
+        }
+
+        $product = Product::create($data);
+        return new ProductResource($product);
+    }
+    public function show(Product $product)
+    {
+        return new ProductResource($product);
+    }
+    public function update(Request $request, Product $product)
+    {
+        $data = $request->all();
+
+        $validator = Validator::make($data, [
+            'limit' => 'required',
+            'name' => 'required',
+            'description' => 'required',
+            'tags' => 'required',
+            'categories' => 'required',
+            'price_from' => 'required',
+            'price_to' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response(['error' => $validator->errors(), 'Validation Error']);
+        }
+
+        $product->update($request->all());
+        return new ProductResource($product);
+    }
+    public function destroy(Product $product)
+    {
+        $product->delete();
+        return new ProductResource($product);
+    }
 }
+
