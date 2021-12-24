@@ -25,13 +25,14 @@ class StoreProductRequest extends FormRequest
     public function rules()
     {
         return [
-            'limit' => 'required',
+            // 'limit' => 'required',
             'name' => 'required',
+            'price' => 'required',
             'description' => 'required',
             'tags' => 'required',
-            'categories' => 'required',
-            'price_from' => 'required',
-            'price_to' => 'required',
+            'categories_id' => 'required',
+            // 'price_from' => 'required',
+            // 'price_to' => 'required',
         ];
     }
 }
