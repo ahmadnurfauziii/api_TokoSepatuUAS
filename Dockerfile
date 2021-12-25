@@ -1,6 +1,6 @@
 FROM php:7.4-apache
 
-WORKDIR /var/www/shoes-store
+WORKDIR /var/www/aksens-webserver
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
@@ -28,11 +28,11 @@ RUN composer install --no-autoloader --no-scripts --no-dev
 
 COPY docker/ /
 RUN a2enmod rewrite headers \
-    && a2ensite shoes-store \
+    && a2ensite aksens-webserver \
     && a2dissite 000-default \
-    && chmod +x /usr/local/bin/docker-shoes-store-entrypoint
+    && chmod +x /usr/local/bin/docker-aksens-webserver-entrypoint
 
-COPY . /var/www/shoes-store
+COPY . /var/www/aksens-webserver
 RUN composer install --optimize-autoloader --no-dev
 
-CMD ["docker-shoes-store-entrypoint"]
+CMD ["docker-aksens-webserver-entrypoint"]
