@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
-cd /var/www/shoes-store
+cd /var/www/aksens-webserver
 
 role=${CONTAINER_ROLE:-app}
 if [[ -z "$APP_ENV" ]]; then

@@ -1,4 +1,4 @@
-name: shoes-store
+name: aksens-webserver
 
 on:
   push:
@@ -40,8 +40,8 @@ jobs:
 
       - name: 'Build and push'
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/shoes-store .
-          docker push ${{ secrets.DOCKERHUB_USERNAME}}/shoes-store
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/aksens-webserver .
+          docker push ${{ secrets.DOCKERHUB_USERNAME}}/aksens-webserver
 
       - name: 'Write config'
         run: |
@@ -74,7 +74,7 @@ jobs:
             oci compute instance list \
             --lifecycle-state RUNNING \
             --compartment-id ${{secrets.VM_COMPARTMENT_OCID}} \
-            --display-name shoes-store \
+            --display-name aksens-webserver \
             --query "data [0].id" \
             --raw-output \
             )" >> $GITHUB_ENV
