@@ -32,7 +32,7 @@ RUN a2enmod rewrite headers \
     && a2dissite 000-default \
     && chmod +x /usr/local/bin/docker-shoes-store-entrypoint
 
-COPY . /var/www/aksens-webserver
+COPY . /var/www/shoes-store
 RUN composer install --optimize-autoloader --no-dev
 
 CMD ["docker-shoes-store-entrypoint"]
