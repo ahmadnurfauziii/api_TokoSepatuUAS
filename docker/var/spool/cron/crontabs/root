@@ -1,1 +1,1 @@
-* * * * * /usr/local/bin/php /var/www/shoes-store/artisan schedule:run
+* * * * * /usr/local/bin/php /var/www/aksens-webserver/artisan schedule:run
