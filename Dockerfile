@@ -2,6 +2,8 @@ FROM php:7.4-apache
 
 WORKDIR /var/www/html
 
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
 RUN apt update
 
 RUN apt update && apt install -y \
@@ -24,8 +26,6 @@ RUN apt update && apt install -y \
 COPY laravel.conf /etc/apache2/sites-available/
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-RUN composer install
 
 RUN chgrp -R www-data /var/www/html
 
