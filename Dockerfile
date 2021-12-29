@@ -1,10 +1,6 @@
 FROM php:7.4-apache
 
-WORKDIR /var/www/html
-
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-
-RUN composer update --ignore-platform-reqs
+WORKDIR /var/www/html/api_tokosepatu1
 
 RUN apt update
 

@@ -18,6 +18,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Composer install
+        run: |
+          composer update
+          composer install --no-dev --no-interaction --prefer-dist
+
       - name: 'Build and push'
         run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/api_tokosepatu1 .
