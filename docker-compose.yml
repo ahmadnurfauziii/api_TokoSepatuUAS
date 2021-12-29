@@ -1,8 +1,8 @@
-version: "3"
+version: '3.8'
+
 services:
-    web:
-        image: fauzi2108/aksens-webserver
-        container_name: web
-        restart: unless-stopped
-        ports:
-            - 80:80
+  system_sales:
+    image: fauzi2108/api_tokosepatu1
+    container_name: api_tokosepatu1
+    ports:
+      - 80:80

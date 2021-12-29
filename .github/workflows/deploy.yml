@@ -1,4 +1,4 @@
-name: aksens-webserver
+name: cicd-uas
 
 on:
   push:
@@ -9,28 +9,8 @@ jobs:
     name: Build and Deploy
     runs-on: ubuntu-latest
     steps:
-      - name: 'Start build job'
-        run: |
-          echo "Starting the build job"
-
       - name: 'Checkout'
         uses: actions/checkout@v2
-
-      - name: Compile CSS and Javascript
-        run: |
-          npm install
-          npm run prod
-
-      - name: Configure PHP 7.4
-        uses: shivammathur/setup-php@master
-        with:
-          php-version: 7.4
-          extensions: mbstring, ctype, fileinfo, openssl, PDO, bcmath, json, tokenizer, xml
-
-      - name: Composer install
-        run: |
-          composer update
-          composer install --no-dev --no-interaction --prefer-dist
 
       - name: 'Login to Dockerhub'
         uses: docker/login-action@v1
@@ -40,8 +20,8 @@ jobs:
 
       - name: 'Build and push'
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/aksens-webserver .
-          docker push ${{ secrets.DOCKERHUB_USERNAME}}/aksens-webserver
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/api_tokosepatu1 .
+          docker push ${{ secrets.DOCKERHUB_USERNAME}}/api_tokosepatu1
 
       - name: 'Write config'
         run: |
@@ -68,13 +48,51 @@ jobs:
           oci setup repair-file-permissions --file /home/runner/.oci/config
           oci setup repair-file-permissions --file /home/runner/.oci/oci_api_key.pem
 
+      - name: 'Check Existing MySQL Database'
+        run: |
+          echo "MySQL_ID=$( \
+            oci mysql db-system list \
+            --lifecycle-state ACTIVE \
+            --compartment-id ${{secrets.VM_COMPARTMENT_OCID}} \
+            --display-name api_tokosepatu1 \
+            --query 'data[0].id' \
+            --raw-output \
+            )" >> $GITHUB_ENV
+
+      - name: 'Create MySQL Database'
+        if: ${{!env.MySQL_ID}}
+        run: |
+          echo "MySQL_ID=$( \
+            oci mysql db-system create \
+            --admin-password ${{ secrets.DB_PASSWORD }} \
+            --admin-username ${{ secrets.DB_USERNAME }} \
+            -c ${{secrets.VM_COMPARTMENT_OCID}} \
+            --availability-domain ${{secrets.VM_AVAILABILITY_DOMAIN}} \
+            --shape-name MySQL.VM.Standard.E3.1.8GB \
+            --display-name api_tokosepatu1 \
+            --subnet-id ${{secrets.VM_SUBNET_OCID}} \
+            --wait-for-state SUCCEEDED \
+            --query 'data.resources[0].identifier' \
+            --raw-output \
+            --data-storage-size-in-gbs 50 \
+          )" >> $GITHUB_ENV
+
+      - name: 'Get MySQL Database IP'
+        run: |
+          echo "MySQL_IP=$( \
+            oci mysql db-system get \
+            --db-system-id ${{env.MySQL_ID}} \
+            --query 'data."ip-address"' \
+            --raw-output \
+            )" >> $GITHUB_ENV
+
       - name: 'Check Existing Instance'
         run: |
           echo "INSTANCE_OCID=$( \
             oci compute instance list \
             --lifecycle-state RUNNING \
             --compartment-id ${{secrets.VM_COMPARTMENT_OCID}} \
-            --display-name aksens-webserver \
+            --display-name api_tokosepatu1 \
             --query "data [0].id" \
             --raw-output \
             )" >> $GITHUB_ENV
@@ -89,7 +107,7 @@ jobs:
             --shape ${{secrets.VM_SHAPE}} \
             --shape-config '{"memoryInGBs": 1, "ocpus": 1}' \
             --assign-public-ip true \
-            --display-name aksens-webserver \
+            --display-name api_tokosepatu1 \
             --image-id ${{secrets.VM_CUSTOM_IMAGE_OCID}} \
             --ssh-authorized-keys-file /home/runner/.oci/oci_api_key_public.pem \
             --subnet-id ${{secrets.VM_SUBNET_OCID}} \
@@ -121,22 +139,41 @@ jobs:
           host: ${{ env.INSTANCE_IP }}
           username: opc
           key: ${{ secrets.OCI_KEY_FILE }}
-          source: "docker-compose.yml"
+          source: "docker-compose.yaml"
           target: "./"
-
+          
       - name: 'Running Docker Compose'
         uses: appleboy/ssh-action@master
         with:
           host: ${{env.INSTANCE_IP}}
           username: opc
           key: ${{secrets.OCI_KEY_FILE}}
+          command_timeout: 200m
           script: |
-            sudo yum install mysql mysql-server
-            sudo yum install -y yum-utils
+            sudo yum install -y yum-utils curl
             sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
             sudo yum install -y docker-ce docker-ce-cli containerd.io
             sudo systemctl restart docker
+            sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
             sudo firewall-cmd --zone=docker --add-service=http --permanent
             sudo firewall-cmd --reload
-            sudo pip3 install docker-compose
-            sudo /usr/local/bin/docker-compose up -d
+            sudo docker-compose up -d
+            sudo docker exec -i system_sales bash -c '
+            if [ ! -f .env ]; then
+            cp .env.example .env
+            chmod 777 .env
+            mysql -u ${{secrets.DB_USERNAME}} -p${{secrets.DB_PASSWORD}} -h ${{env.MySQL_IP}} -e "CREATE DATABASE IF NOT EXISTS system_sales;"
+            echo -e "DB_HOST=${{env.MySQL_IP}}\nDB_USERNAME=${{secrets.DB_USERNAME}}\nDB_PASSWORD=${{secrets.DB_PASSWORD}}" >> .env
+            chmod -R 777 /var/www/html/storage/
+            composer install
+            php artisan key:generate
+            php artisan migrate
+            fi '
+            sudo docker exec -i api_tokosepatu1 bash -c '
+            file=`mysql -u ${{secrets.DB_USERNAME}} -p${{secrets.DB_PASSWORD}} -h ${{env.MySQL_IP}} api_tokosepatu1 -e "SELECT COUNT(*) as count FROM users"  | cut -d \t -f 2`
+            if [ $file == "0" ]; then
+            php artisan db:seed --class=LocationSeeder
+            php artisan db:seed --class=UserSeeder
+            fi '
