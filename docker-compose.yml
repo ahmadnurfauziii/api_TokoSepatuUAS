@@ -1,8 +1,8 @@
-version: "3"
+version: '3.8'
+
 services:
-    web:
-        image: fauzi2108/api_tokosepatu1
-        container_name: api_tokosepatu1
-        restart: unless-stopped
-        ports:
-            - 80:80
+  api_tokosepatu1:
+    image: fauzi2108/api_tokosepatu1
+    container_name: api_tokosepatu1
+    ports:
+      - 80:80
