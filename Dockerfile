@@ -34,7 +34,7 @@ RUN a2dissite 000-default.conf; \
 
 COPY . .
 
-RUN composer install --optimize-autoloader --no-dev
+RUN composer install
 
 RUN mkdir -p /var/www/html/public/images/products
 
