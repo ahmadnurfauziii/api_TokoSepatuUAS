@@ -1,8 +1,10 @@
-FROM php:7.4-apache
+FROM php:8.0-apache
 
 WORKDIR /var/www/html
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+RUN composer update --ignore-platform-reqs
 
 RUN apt update
 
