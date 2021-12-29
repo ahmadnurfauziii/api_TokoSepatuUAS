@@ -25,6 +25,8 @@ COPY laravel.conf /etc/apache2/sites-available/
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+RUN composer install --optimize-autoloader --no-dev
+
 RUN chgrp -R www-data /var/www/html
 
 RUN a2dissite 000-default.conf; \
