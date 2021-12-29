@@ -1,41 +1,38 @@
 FROM php:7.4-apache
 
-WORKDIR /var/www/html
+WORKDIR /var/www/api_tokosepatu1
 
-RUN apt update
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-RUN apt update && apt install -y \
-        libpng-dev \
-        zlib1g-dev \
-        libxml2-dev \
-        libzip-dev \
-        libonig-dev \
-        zip \
-        curl \
-        unzip \
-        mariadb-client-core-10.5 \
-    && docker-php-ext-configure gd \
-    && docker-php-ext-install -j$(nproc) gd \
-    && docker-php-ext-install pdo_mysql \
-    && docker-php-ext-install mysqli \
-    && docker-php-ext-install zip \
-    && docker-php-source delete
+RUN apt-get update \
+    && apt-get install -y \
+    cron \
+    icu-devtools \
+    jq \
+    libfreetype6-dev libicu-dev libjpeg62-turbo-dev libpng-dev libpq-dev \
+    libsasl2-dev libssl-dev libwebp-dev libxpm-dev libzip-dev \
+    unzip \
+    zlib1g-dev \
+    && apt-get clean \
+    && apt-get autoclean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-COPY laravel.conf /etc/apache2/sites-available/
+RUN cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini \
+    && yes '' | pecl install redis \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp --with-xpm \
+    && docker-php-ext-install gd intl pdo_mysql pdo_pgsql zip \
+    && docker-php-ext-enable opcache redis
 
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY composer.json composer.lock ./
+RUN composer install --no-autoloader --no-scripts --no-dev
 
+COPY docker/ /
+RUN a2enmod rewrite headers \
+    && a2ensite api_tokosepatu1 \
+    && a2dissite 000-default \
+    && chmod +x /usr/local/bin/docker-api_tokosepatu1-entrypoint
 
-RUN chgrp -R www-data /var/www/html
+COPY . /var/www/api_tokosepatu1
+RUN composer install --optimize-autoloader --no-dev
 
-RUN a2dissite 000-default.conf; \
-    a2ensite laravel.conf; \
-    a2enmod rewrite
-
-COPY . .
-
-RUN composer install
-
-RUN mkdir -p /var/www/html/public/images/products
-
-RUN chmod 777 /var/www/html/public/images/products
+CMD ["docker-api_tokosepatu1-entrypoint"]
