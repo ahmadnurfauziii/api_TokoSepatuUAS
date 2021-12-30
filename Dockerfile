@@ -34,5 +34,4 @@ RUN a2dissite 000-default.conf; \
 COPY . .
 
 RUN mkdir -p /var/www/html/public/images/products
-
 RUN chmod 777 /var/www/html/public/images/products
